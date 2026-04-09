@@ -2,6 +2,7 @@ services:
   - type: web
     name: mp3-backend
     env: node
+    plan: free
     buildCommand: |
       npm install
       pip install yt-dlp
