@@ -17,7 +17,7 @@ app.post('/convert', (req, res) => {
 
     const filename = `audio_${Date.now()}.mp3`;
 
-    const command = `yt-dlp -x --audio-format mp3 --ffmpeg-location /usr/bin/ffmpeg -o downloads/${filename} "${url}"`;
+    const command = `python3 -m yt_dlp -f bestaudio -x --audio-format mp3 -o downloads/${filename} "${url}"`;
 
     exec(command, (err, stdout, stderr) => {
 		if (err) {
