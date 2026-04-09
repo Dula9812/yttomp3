@@ -4,14 +4,17 @@ const fs = require('fs');
 const path = require('path');
 const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static('downloads'));
 
-const ffmpegPath = path.join(__dirname, 'ffmpeg', 'ffmpeg'); // place static binary here
-ffmpeg.setFfmpegPath(ffmpegPath);
+// make sure 'downloads' folder exists
+if (!fs.existsSync('downloads')) fs.mkdirSync('downloads');
 
 app.post('/convert', async (req, res) => {
   const url = req.body.url;
@@ -26,7 +29,7 @@ app.post('/convert', async (req, res) => {
     ffmpeg(stream)
       .audioBitrate(192)
       .format('mp3')
-      .on('error', err => {
+      .on('error', (err) => {
         console.error(err);
         res.json({ error: "Conversion failed" });
       })
@@ -34,6 +37,7 @@ app.post('/convert', async (req, res) => {
         res.json({ download: `https://YOUR-RENDER-URL/${filename}` });
       })
       .save(filepath);
+
   } catch (err) {
     console.error(err);
     res.json({ error: "Conversion failed" });
