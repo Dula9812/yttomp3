@@ -21,7 +21,8 @@ app.post('/convert', (req, res) => {
     const filepath = path.join(downloadsDir, filename);
 
     // Simplified command because tools are pre-installed in Docker
-    const command = `yt-dlp "${url}" -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 -o "${filepath}" --no-playlist --no-check-certificates`;
+    // Inside server.js
+	const command = `yt-dlp "${url}" -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 --extractor-args "youtube:player_client=android" -o "${filepath}" --no-playlist --no-check-certificates`;
 
     exec(command, (err, stdout, stderr) => {
         if (err) {
