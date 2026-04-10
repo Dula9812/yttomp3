@@ -1,10 +1,29 @@
-services:
-  - type: web
-    name: mp3-backend
-    env: node
-    plan: free
-    buildCommand: |
-      npm install
-      curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
-      chmod a+rx yt-dlp
-    startCommand: node server.js
+# Use Node 18
+FROM node:18-slim
+
+# Install Python and FFmpeg
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    ffmpeg \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install yt-dlp via pip
+RUN pip3 install yt-dlp --break-system-packages
+
+WORKDIR /app
+
+# Copy package files and install
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the code
+COPY . .
+
+# Create downloads folder
+RUN mkdir -p downloads
+
+# Start the app
+EXPOSE 3000
+CMD ["node", "server.js"]
