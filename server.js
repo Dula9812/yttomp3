@@ -3,13 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const ytdl = require('ytdl-core');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
-
-ffmpeg.setFfmpegPath(ffmpegPath);
+const youtubedl = require('youtube-dl-exec');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('downloads'));
@@ -20,22 +17,7 @@ if (!fs.existsSync(downloadsDir)) {
     fs.mkdirSync(downloadsDir);
 }
 
-// POST /convert - convert YouTube URL to MP3
-const express = require('express');
-const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
-const youtubedl = require('youtube-dl-exec');
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.static('downloads'));
-
-// create downloads folder
-const downloadsDir = path.join(__dirname, 'downloads');
-if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
-
+// Convert YouTube to MP3
 app.post('/convert', async (req, res) => {
     const url = req.body.url;
 
@@ -54,7 +36,7 @@ app.post('/convert', async (req, res) => {
         });
 
         res.json({
-            download: `https://yttomp3-wv9p.onrender.com/downloads/${filename}`
+            download: `https://your-domain.com/downloads/${filename}`
         });
 
     } catch (err) {
@@ -63,20 +45,12 @@ app.post('/convert', async (req, res) => {
     }
 });
 
+// Health check route
 app.get('/', (req, res) => {
     res.send("Backend running");
 });
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("Server running");
-});
-
-// Simple GET route to check backend
-app.get('/', (req, res) => {
-    res.send("Backend running");
-});
-
-// Listen on Render’s port or 3000 locally
+// Start server (ONLY ONCE)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
