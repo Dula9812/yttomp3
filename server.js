@@ -25,19 +25,22 @@ app.post('/convert', async (req, res) => {
     }
 
     try {
-        // Download and convert using yt-dlp
-        await youtubedl(url, {
+        const outputTemplate = path.join(downloadsDir, '%(title)s.%(ext)s');
+
+        const result = await youtubedl(url, {
             extractAudio: true,
             audioFormat: 'mp3',
-            output: path.join(downloadsDir, '%(title)s.%(ext)s')
+            output: outputTemplate,
+            preferFreeFormats: true,
+            noCheckCertificates: true,
+            noWarnings: true,
+            addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
         });
 
-        // Get latest file
-        const files = fs.readdirSync(downloadsDir);
+        console.log("yt-dlp output:", result);
 
-        if (files.length === 0) {
-            return res.json({ error: "File not found after conversion" });
-        }
+        // get latest file
+        const files = fs.readdirSync(downloadsDir);
 
         const latestFile = files
             .map(file => ({
@@ -46,14 +49,12 @@ app.post('/convert', async (req, res) => {
             }))
             .sort((a, b) => b.time - a.time)[0].name;
 
-        console.log("Downloaded file:", latestFile);
-
         res.json({
             download: `https://yttomp3-wv9p.onrender.com/downloads/${encodeURIComponent(latestFile)}`
         });
 
     } catch (err) {
-        console.error("Download error:", err);
+        console.error("FULL ERROR:", err);
         res.json({ error: "Conversion failed" });
     }
 });
