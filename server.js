@@ -1,21 +1,42 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
-const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const ytdl = require('ytdl-core');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static('downloads'));
+
+// Ensure downloads folder exists
+const downloadsDir = path.join(__dirname, 'downloads');
+if (!fs.existsSync(downloadsDir)) {
+    fs.mkdirSync(downloadsDir);
+}
+
+// POST /convert - convert YouTube URL to MP3
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+const youtubedl = require('youtube-dl-exec');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static('downloads'));
 
 // create downloads folder
 const downloadsDir = path.join(__dirname, 'downloads');
 if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
 
-// serve files
-app.use('/downloads', express.static(downloadsDir));
-
-app.post('/convert', (req, res) => {
+app.post('/convert', async (req, res) => {
     const url = req.body.url;
 
     if (!url) {
@@ -25,21 +46,21 @@ app.post('/convert', (req, res) => {
     const filename = `audio_${Date.now()}.mp3`;
     const filepath = path.join(downloadsDir, filename);
 
-    // yt-dlp command (MOST STABLE)
-    const command = `yt-dlp "${url}" -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 -o "${filepath}" --no-playlist --ignore-errors`;
-
-    exec(command, (err, stdout, stderr) => {
-        if (err) {
-            console.log("ERROR:", stderr);
-            return res.json({ error: "Conversion failed" });
-        }
-
-        console.log("SUCCESS:", filename);
+    try {
+        await youtubedl(url, {
+            extractAudio: true,
+            audioFormat: 'mp3',
+            output: filepath
+        });
 
         res.json({
             download: `https://yttomp3-wv9p.onrender.com/downloads/${filename}`
         });
-    });
+
+    } catch (err) {
+        console.error("Download error:", err);
+        res.json({ error: "Conversion failed" });
+    }
 });
 
 app.get('/', (req, res) => {
@@ -48,4 +69,15 @@ app.get('/', (req, res) => {
 
 app.listen(process.env.PORT || 3000, () => {
     console.log("Server running");
+});
+
+// Simple GET route to check backend
+app.get('/', (req, res) => {
+    res.send("Backend running");
+});
+
+// Listen on Render’s port or 3000 locally
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
