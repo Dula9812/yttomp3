@@ -1,15 +1,15 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const youtubedl = require('youtube-dl-exec');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('downloads'));
 
 // Ensure downloads folder exists
 const downloadsDir = path.join(__dirname, 'downloads');
@@ -17,7 +17,10 @@ if (!fs.existsSync(downloadsDir)) {
     fs.mkdirSync(downloadsDir);
 }
 
-// Convert YouTube to MP3
+// Serve static files from downloads directory with correct path
+app.use('/downloads', express.static(downloadsDir));
+
+// Convert YouTube to MP3 using yt-dlp (more reliable than youtube-dl-exec)
 app.post('/convert', async (req, res) => {
     const url = req.body.url;
 
@@ -29,19 +32,27 @@ app.post('/convert', async (req, res) => {
     const filepath = path.join(downloadsDir, filename);
 
     try {
-        await youtubedl(url, {
-            extractAudio: true,
-            audioFormat: 'mp3',
-            output: filepath
-        });
-
-        res.json({
-            download: `https://yttomp3-wv9p.onrender.com/downloads/${filename}`
-        });
+        // Using yt-dlp command line (more reliable)
+        const command = `yt-dlp -x --audio-format mp3 -o "${filepath}" "${url}"`;
+        
+        await execPromise(command);
+        
+        // Check if file was created
+        if (fs.existsSync(filepath)) {
+            // Get the base URL from the request
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            
+            res.json({
+                download: `${baseUrl}/downloads/${filename}`,
+                filename: filename
+            });
+        } else {
+            throw new Error("File not created");
+        }
 
     } catch (err) {
         console.error("Download error:", err);
-        res.json({ error: "Conversion failed" });
+        res.json({ error: "Conversion failed: " + err.message });
     }
 });
 
@@ -50,8 +61,9 @@ app.get('/', (req, res) => {
     res.send("Backend running");
 });
 
-// Start server (ONLY ONCE)
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`Downloads directory: ${downloadsDir}`);
 });
