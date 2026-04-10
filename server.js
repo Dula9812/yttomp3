@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
@@ -8,15 +9,13 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('downloads'));
 
 // Ensure downloads folder exists
 const downloadsDir = path.join(__dirname, 'downloads');
 if (!fs.existsSync(downloadsDir)) {
-    fs.mkdirSync(downloadsDir, { recursive: true });
+    fs.mkdirSync(downloadsDir);
 }
-
-// Serve static files from downloads directory
-app.use('/downloads', express.static(downloadsDir));
 
 // Convert YouTube to MP3
 app.post('/convert', async (req, res) => {
@@ -26,50 +25,32 @@ app.post('/convert', async (req, res) => {
         return res.json({ error: "No URL provided" });
     }
 
-    // Clean URL (remove playlist and radio parameters)
-    const cleanUrl = url.split('&')[0];
-    
     const filename = `audio_${Date.now()}.mp3`;
     const filepath = path.join(downloadsDir, filename);
 
     try {
-        console.log(`Converting: ${cleanUrl}`);
-        
-        await youtubedl(cleanUrl, {
+        await youtubedl(url, {
             extractAudio: true,
             audioFormat: 'mp3',
-            audioQuality: 0,
-            output: filepath,
-            noCheckCertificate: true,
-            preferFreeFormats: true
+            output: filepath
         });
 
-        // Check if file exists
-        if (fs.existsSync(filepath)) {
-            const fileStats = fs.statSync(filepath);
-            console.log(`File created: ${filename}, Size: ${fileStats.size} bytes`);
-            
-            const baseUrl = `${req.protocol}://${req.get('host')}`;
-            res.json({
-                download: `${baseUrl}/downloads/${filename}`,
-                success: true
-            });
-        } else {
-            throw new Error("File not created");
-        }
+        res.json({
+            download: `https://yttomp3-wv9p.onrender.com/downloads/${filename}`
+        });
 
     } catch (err) {
         console.error("Download error:", err);
-        res.json({ error: "Conversion failed: " + err.message });
+        res.json({ error: "Conversion failed" });
     }
 });
 
 // Health check route
 app.get('/', (req, res) => {
-    res.send("YouTube to MP3 Backend Running");
+    res.send("Backend running");
 });
 
-// Start server
+// Start server (ONLY ONCE)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

@@ -1,7 +1,7 @@
 services:
   - type: web
     name: mp3-backend
-    runtime: image
-    repo: https://github.com/Dula9812/yttomp3.git
+    env: node
     plan: free
-    dockerfilePath: ./Dockerfile
+    buildCommand: npm install
+    startCommand: node server.js
