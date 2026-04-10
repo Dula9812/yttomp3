@@ -31,8 +31,8 @@ app.post('/convert', async (req, res) => {
         });
 
         res.json({
-            download: `https://yttomp3-wv9p.onrender.com/${filename}`
-        });
+		download: `https://your-render-url/downloads/${filename}`
+		});
 
     } catch (err) {
         console.error("Download error:", err);
