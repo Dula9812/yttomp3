@@ -1,24 +1,10 @@
 services:
   - type: web
     name: mp3-backend
-    env: docker
+    env: node
     plan: free
     buildCommand: |
-      apt-get update && apt-get install -y ffmpeg python3 python3-pip
-      pip3 install yt-dlp
       npm install
+      pip install -r requirements.txt
+      apt-get update && apt-get install -y ffmpeg
     startCommand: node server.js
-    envVars:
-      - key: NODE_VERSION
-        value: 18.17.0
-        
-    services:
-  - type: web
-    name: mp3-backend
-    runtime: image
-    repo: https://github.com/YOUR_USERNAME/YOUR_REPO
-    plan: free
-    dockerfilePath: ./Dockerfile
-    envVars:
-      - key: PORT
-        value: 3000
