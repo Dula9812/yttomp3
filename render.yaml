@@ -5,6 +5,6 @@ services:
     plan: free
     buildCommand: |
       npm install
-      pip install yt-dlp
-      apt-get update && apt-get install -y ffmpeg
+      curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
+      chmod a+rx yt-dlp
     startCommand: node server.js
