@@ -2,9 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
+const youtubedl = require('youtube-dl-exec');
 
 const app = express();
 
@@ -14,13 +12,13 @@ app.use(express.json());
 // Ensure downloads folder exists
 const downloadsDir = path.join(__dirname, 'downloads');
 if (!fs.existsSync(downloadsDir)) {
-    fs.mkdirSync(downloadsDir);
+    fs.mkdirSync(downloadsDir, { recursive: true });
 }
 
-// Serve static files from downloads directory with correct path
+// Serve static files from downloads directory
 app.use('/downloads', express.static(downloadsDir));
 
-// Convert YouTube to MP3 using yt-dlp (more reliable than youtube-dl-exec)
+// Convert YouTube to MP3
 app.post('/convert', async (req, res) => {
     const url = req.body.url;
 
@@ -28,23 +26,33 @@ app.post('/convert', async (req, res) => {
         return res.json({ error: "No URL provided" });
     }
 
+    // Clean URL (remove playlist and radio parameters)
+    const cleanUrl = url.split('&')[0];
+    
     const filename = `audio_${Date.now()}.mp3`;
     const filepath = path.join(downloadsDir, filename);
 
     try {
-        // Using yt-dlp command line (more reliable)
-        const command = `yt-dlp -x --audio-format mp3 -o "${filepath}" "${url}"`;
+        console.log(`Converting: ${cleanUrl}`);
         
-        await execPromise(command);
-        
-        // Check if file was created
+        await youtubedl(cleanUrl, {
+            extractAudio: true,
+            audioFormat: 'mp3',
+            audioQuality: 0,
+            output: filepath,
+            noCheckCertificate: true,
+            preferFreeFormats: true
+        });
+
+        // Check if file exists
         if (fs.existsSync(filepath)) {
-            // Get the base URL from the request
-            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            const fileStats = fs.statSync(filepath);
+            console.log(`File created: ${filename}, Size: ${fileStats.size} bytes`);
             
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
             res.json({
                 download: `${baseUrl}/downloads/${filename}`,
-                filename: filename
+                success: true
             });
         } else {
             throw new Error("File not created");
@@ -58,12 +66,11 @@ app.post('/convert', async (req, res) => {
 
 // Health check route
 app.get('/', (req, res) => {
-    res.send("Backend running");
+    res.send("YouTube to MP3 Backend Running");
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`Downloads directory: ${downloadsDir}`);
 });
