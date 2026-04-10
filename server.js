@@ -22,7 +22,7 @@ app.post('/convert', (req, res) => {
 
     // Simplified command because tools are pre-installed in Docker
     // Inside server.js
-	const command = `yt-dlp "${url}" -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 --extractor-args "youtube:player_client=android" -o "${filepath}" --no-playlist --no-check-certificates`;
+	const command = `yt-dlp "${url}" -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 --cookies cookies.txt -o "${filepath}" --no-playlist`;
 
     exec(command, (err, stdout, stderr) => {
         if (err) {
