@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MP3 Downloader</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #111;
+  color: white;
+  text-align: center;
+  padding: 50px;
+}
+
+input {
+  width: 80%;
+  padding: 15px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 15px 30px;
+  background: red;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.result {
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>YouTube to MP3</h1>
+
+<input type="text" id="url" placeholder="Paste YouTube link">
+<br>
+<button onclick="convert()">Convert</button>
+
+<div class="result" id="result"></div>
+
+<script>
+async function convert() {
+  const url = document.getElementById("url").value;
+  const result = document.getElementById("result");
+
+  if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
+    result.innerHTML = "Invalid URL";
+    return;
+  }
+
+  result.innerHTML = "Processing...";
+
+  try {
+    const res = await fetch("https://yttomp3-wv9p.onrender.com/convert", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ url })
+    });
+
+    const data = await res.json();
+
+	if (data.error) {
+	  result.innerHTML = data.error;
+	} else {
+	  result.innerHTML = `
+		<a href="${data.download}" target="_blank">Download MP3</a>
+	  `;
+	}
+
+  } catch (e) {
+    result.innerHTML = "Server not running!";
+  }
+}
+</script>
+
+</body>
+</html>
