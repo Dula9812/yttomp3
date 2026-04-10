@@ -26,20 +26,21 @@ app.post('/convert', (req, res) => {
     const filepath = path.join(downloadsDir, filename);
 
     // yt-dlp command (MOST STABLE)
-    const command = `yt-dlp -x --audio-format mp3 -o "${filepath}" "${url}"`;
+    const command = `yt-dlp "${url}" -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 -o "${filepath}" --no-playlist --ignore-errors`;
 
-    exec(command, (err, stdout, stderr) => {
-        if (err) {
-            console.log("ERROR:", stderr);
-            return res.json({ error: "Conversion failed" });
-        }
+	exec(command, (err, stdout, stderr) => {
+		console.log("STDOUT:", stdout);
+		console.log("STDERR:", stderr);
 
-        console.log("SUCCESS:", filename);
+		if (err) {
+			console.log("ERROR:", err);
+			return res.json({ error: "Conversion failed" });
+		}
 
-        res.json({
-            download: `https://yttomp3-wv9p.onrender.com/downloads/${filename}`
-        });
-    });
+		res.json({
+			download: `https://YOUR-RENDER-URL/downloads/${filename}`
+		});
+	});
 });
 
 app.get('/', (req, res) => {
