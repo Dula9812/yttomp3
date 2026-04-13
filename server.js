@@ -30,7 +30,8 @@ app.post('/convert', (req, res) => {
     const filename = `audio_${Date.now()}.mp3`;
     const filepath = path.join(downloadsDir, filename);
 
-    const command = `/opt/render/.local/bin/yt-dlp "${url}" -f bestaudio -o "${filepath.replace('.mp3', '.webm')}" --no-playlist`;
+    // ✅ Use FULL PATH yt-dlp (important for Render)
+    const command = `/opt/render/.local/bin/yt-dlp "${url}" -f bestaudio --extract-audio --audio-format mp3 -o "${filepath}" --no-playlist`;
 
 	exec(command, (err, stdout, stderr) => {
 		console.log("STDOUT:\n", stdout);
