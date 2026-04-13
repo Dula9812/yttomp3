@@ -6,5 +6,4 @@ services:
     buildCommand: |
       npm install
       pip install yt-dlp
-      apt-get update && apt-get install -y ffmpeg
     startCommand: node server.js
