@@ -30,21 +30,23 @@ app.post('/convert', (req, res) => {
     const filename = `audio_${Date.now()}.mp3`;
     const filepath = path.join(downloadsDir, filename);
 
-    const command = `/opt/render/.local/bin/yt-dlp "${url}" -f bestaudio --extract-audio --audio-format mp3 -o "${filepath}" --no-playlist`;
+    const command = `/opt/render/.local/bin/yt-dlp "${url}" -f bestaudio -o "${filepath.replace('.mp3', '.webm')}" --no-playlist`;
 
-    exec(command, (err, stdout, stderr) => {
-        console.log("STDOUT:", stdout);
-        console.log("STDERR:", stderr);
+	exec(command, (err, stdout, stderr) => {
+		console.log("STDOUT:\n", stdout);
+		console.log("STDERR:\n", stderr);
 
-        if (err) {
-            console.error("ERROR:", err);
-            return res.json({ error: "Conversion failed" });
-        }
+		if (err) {
+			return res.json({ 
+				error: "Conversion failed",
+				details: stderr   // 👈 IMPORTANT
+			});
+		}
 
-        res.json({
-            download: `https://yttomp3-wv9p.onrender.com/downloads/${filename}`
-        });
-    });
+		res.json({
+			download: `https://yttomp3-wv9p.onrender.com/downloads/${filename}`
+		});
+	});
 });
 
 // Health check route
