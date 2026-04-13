@@ -3,5 +3,8 @@ services:
     name: mp3-backend
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: |
+      npm install
+      pip install yt-dlp
+      apt-get update && apt-get install -y ffmpeg
     startCommand: node server.js
